@@ -15,6 +15,9 @@ import org.gradle.api.tasks.bundling.Zip
 import org.gradle.api.tasks.Copy
 import proguard.gradle.ProGuardTask
 
+import java.util.regex.Matcher
+import java.util.regex.Pattern
+
 public class AppCanPlugin implements Plugin<Project> {
 
 
@@ -26,12 +29,14 @@ public class AppCanPlugin implements Plugin<Project> {
     List<Task> flavorsProguardTask=new ArrayList<Task>()
 
     static final String BUILD_APPCAN_DIR ="build/appcan"
+    public static String version=""
 
     @Override
     public void apply(Project project) {
         this.mProject=project;
         this.mExtension=project.extensions.create(PLUGIN_NAME,AppCanPluginExtension)
         project.afterEvaluate {
+            version=getEngineVersion(project)
             androidPlugin=getAndroidBasePlugin(project)
             def variantManager=getVariantManager(androidPlugin)
             def androidAppPlugin=androidPlugin as AppPlugin
@@ -75,45 +80,81 @@ public class AppCanPlugin implements Plugin<Project> {
     /**
      * 压缩WebkitCorePalm工程
      */
-    private static void createWebkitCorePalmZipTask(Project project, String name){
+    private void createWebkitCorePalmZipTask(Project project, String name){
         def task=project.tasks.create("export${name.capitalize()}EngineTemp",Zip)
         task.from("$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/WebkitCorePalm")
         task.into("WebkitCorePalm")
         task.destinationDir=project.file("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
-        task.archiveName="Engine_${name}"
+        task.archiveName=getPackageName(name)
         task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}EngineJar"))
         task.doFirst{
-            println("project path: "+project.getProjectDir().getPath())
         }
         task.doLast{
 
         }
-
-
     }
 
     /**
      * 生成引擎包
      */
-    private static void createExportEngineZipTask(Project project, String name){
+    private void createExportEngineZipTask(Project project, String name){
         def task=project.tasks.create("export${name.capitalize()}Engine",Zip)
-        task.from("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/Engine_${name}",
+        task.from("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/${getPackageName(name)}",
                 "$BUILD_APPCAN_DIR/$name/en_baseEngineProject/androidEngine.xml")
         task.into("")
         task.exclude("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm")
         task.destinationDir=project.file("build/outputs/engine")
-        task.archiveName="Engine_${name}.zip"
+
+        task.baseName=getPackageName(name)
         task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("export${name.capitalize()}EngineTemp"))
         task.doFirst{
-            println("project path: "+project.getProjectDir().getPath())
+             setXmlContent(new File(project.getProjectDir(),
+                    "$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/androidEngine.xml"),name)
         }
-        task.doLast{
+    }
 
+    /**
+     * 获取package name
+     */
+    private String getPackageName(String flavor){
+        def date = new Date().format("yyMMdd")
+        def versionTemp=version
+        return "android_Engine_${versionTemp}_${date}_01_${flavor}"
+    }
+
+    /**
+     * 获取xml文件里面的version
+     */
+    private static String getEngineZipVersion(String flavor){
+        def date = new Date().format("yyMMdd")
+        def versionTemp=version
+        return "sdksuit_${versionTemp}_${date}_01_${flavor}"
+    }
+
+    private void setXmlContent(File xmlFile,String flavor){
+        def content=xmlFile.getText('UTF-8')
+                .replace("\$version\$",getEngineZipVersion(flavor))
+                .replace("\$package\$",getPackageName(flavor))
+                .replace("\$kernel\$",flavor)
+        xmlFile.write(content)
+    }
+
+    /**
+     * 获取引擎版本号
+     * @return
+     */
+    private String getEngineVersion(Project project){
+        def versionFilePath = "src/main/java/org/zywx/wbpalmstar/base/BConstant.java"
+        def version=""
+        Pattern p=Pattern.compile("ENGINE_VERSION=\"(.*?)\"")
+        Matcher m=p.matcher(new File(project.getProjectDir(),versionFilePath).getText('UTF-8'))
+        if (m.find()){
+            version=m.group(1)
         }
-
-
+        println("Engine version is $version")
+        return version
     }
 
 
