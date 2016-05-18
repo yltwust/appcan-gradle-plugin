@@ -6,7 +6,6 @@ import com.android.build.gradle.internal.VariantManager
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.internal.variant.BaseVariantOutputData
 import com.android.builder.model.SourceProvider
-import com.android.utils.FileUtils
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -26,7 +25,7 @@ public class AppCanPlugin implements Plugin<Project> {
     List<Task> flavorsJarTask=new ArrayList<Task>()
     List<Task> flavorsProguardTask=new ArrayList<Task>()
 
-    static final String BUILD_DIR="build/appcan"
+    static final String BUILD_APPCAN_DIR ="build/appcan"
 
     @Override
     public void apply(Project project) {
@@ -59,7 +58,7 @@ public class AppCanPlugin implements Plugin<Project> {
     private static void createCopyBaseProjectTask(Project project, String name){
         def task=project.tasks.create("copy${name.capitalize()}Project",Copy)
         task.from("../en_baseEngineProject")
-        task.into("$BUILD_DIR/$name/en_baseEngineProject")
+        task.into("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
         task.dependsOn(project.tasks.findByName("proguard${name.capitalize()}Engine"))
     }
 
@@ -69,7 +68,7 @@ public class AppCanPlugin implements Plugin<Project> {
     private static void createCopyEngineJarTask(Project project, String name){
         def task=project.tasks.create("copy${name.capitalize()}EngineJar",Copy)
         task.from("build/outputs/jar/AppCanEngine_${name}.jar")
-        task.into("$BUILD_DIR/$name/en_baseEngineProject/WebkitCorePalm/libs")
+        task.into("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm/libs")
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}Project"))
     }
 
@@ -78,10 +77,9 @@ public class AppCanPlugin implements Plugin<Project> {
      */
     private static void createWebkitCorePalmZipTask(Project project, String name){
         def task=project.tasks.create("export${name.capitalize()}EngineTemp",Zip)
-        project.file("$BUILD_DIR/$name/en_baseEngineProject/WebkitCorePalm").mkdirs()
-        task.from("$BUILD_DIR/${name}/en_baseEngineProject/WebkitCorePalm")
+        task.from("$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/WebkitCorePalm")
         task.into("WebkitCorePalm")
-        task.destinationDir=project.file("$BUILD_DIR/$name/en_baseEngineProject")
+        task.destinationDir=project.file("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
         task.archiveName="Engine_${name}"
         task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}EngineJar"))
@@ -100,11 +98,11 @@ public class AppCanPlugin implements Plugin<Project> {
      */
     private static void createExportEngineZipTask(Project project, String name){
         def task=project.tasks.create("export${name.capitalize()}Engine",Zip)
-        task.from("$BUILD_DIR/$name/en_baseEngineProject/Engine_${name}",
-                "$BUILD_DIR/$name/en_baseEngineProject/androidEngine.xml")
+        task.from("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/Engine_${name}",
+                "$BUILD_APPCAN_DIR/$name/en_baseEngineProject/androidEngine.xml")
         task.into("")
-        task.exclude("$BUILD_DIR/$name/en_baseEngineProject/WebkitCorePalm")
-        task.destinationDir=project.file("$BUILD_DIR/engine")
+        task.exclude("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm")
+        task.destinationDir=project.file("build/outputs/engine")
         task.archiveName="Engine_${name}.zip"
         task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("export${name.capitalize()}EngineTemp"))
