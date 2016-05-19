@@ -84,12 +84,8 @@ public class AppCanPlugin implements Plugin<Project> {
      */
     private static void createCopyEngineJarTask(Project project, String name){
         def task=project.tasks.create("copy${name.capitalize()}EngineJar",Copy)
-        if (name.equals("crosswalk")){
-            task.from("build/outputs/jar/AppCanEngine_${name}.jar",
-                    "libs/crosswalk-19.49.514.0.aar","libs/libacedes_for_crosswalk.jar")
-        }else {
-            task.from("build/outputs/jar/AppCanEngine_${name}.jar","libs/libacedes-v1.jar")
-        }
+        task.from("build/outputs/jar/AppCanEngine-${name}-${version}.jar","src/${name}/libs/")
+
         task.into("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm/libs")
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}Project"))
     }
@@ -194,7 +190,7 @@ public class AppCanPlugin implements Plugin<Project> {
      * 对每个flavor创建Task生成不混淆的jar
      **/
     private void createFlavorsJarTask(Project project, BasePlugin androidPlugin, def name){
-        def jarBaseName="AppCanEngine_${name}_un_proguard"
+        def jarBaseName="AppCanEngine-${name}-un-proguard"
         def applicationId=androidPlugin.extension.defaultConfig.applicationId;
         def jarEngineTask = project.tasks.create("jar${name.capitalize()}Engine",Jar)
         jarEngineTask.setBaseName(jarBaseName)
@@ -224,13 +220,12 @@ public class AppCanPlugin implements Plugin<Project> {
         def androidJarDir = androidSDKDir.toString() + '/platforms/' + androidPlugin.extension.getCompileSdkVersion() +
                 '/android.jar'
 
-        proguardTask.injars("build/outputs/jar/AppCanEngine_${name}_un_proguard.jar")
-        proguardTask.outjars("build/outputs/jar/AppCanEngine_${name}.jar")
+        proguardTask.injars("build/outputs/jar/AppCanEngine-${name}-un-proguard.jar")
+        proguardTask.outjars("build/outputs/jar/AppCanEngine-${name}-${version}.jar")
         proguardTask.libraryjars(androidJarDir)
+        proguardTask.libraryjars("libs")
+        proguardTask.libraryjars("src/${name}/libs")
         proguardTask.configuration('proguard.pro')
-        if ('crosswalk'.equals(name)){
-            proguardTask.libraryjars('libs/crosswalk-19.49.514.0.aar')
-        }
         flavors.add(name)
         flavorsProguardTask.add(proguardTask)
     }
