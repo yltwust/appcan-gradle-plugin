@@ -6,6 +6,7 @@ import com.android.build.gradle.internal.VariantManager
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.internal.variant.BaseVariantOutputData
 import com.android.builder.model.SourceProvider
+import net.koiosmedia.gradle.sevenzip.SevenZip
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
@@ -81,18 +82,12 @@ public class AppCanPlugin implements Plugin<Project> {
      * 压缩WebkitCorePalm工程
      */
     private void createWebkitCorePalmZipTask(Project project, String name){
-        def task=project.tasks.create("export${name.capitalize()}EngineTemp",Zip)
+        def task=project.tasks.create("export${name.capitalize()}EngineTemp",SevenZip)
         task.from("$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/WebkitCorePalm")
-        task.into("WebkitCorePalm")
         task.destinationDir=project.file("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
         task.archiveName=getPackageName(name)
-        task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}EngineJar"))
-        task.doFirst{
-        }
-        task.doLast{
 
-        }
     }
 
     /**
@@ -105,7 +100,6 @@ public class AppCanPlugin implements Plugin<Project> {
         task.into("")
         task.exclude("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm")
         task.destinationDir=project.file("build/outputs/engine")
-
         task.baseName=getPackageName(name)
         task.encoding="UTF-8"
         task.dependsOn(project.tasks.findByName("export${name.capitalize()}EngineTemp"))
