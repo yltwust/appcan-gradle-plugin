@@ -28,7 +28,7 @@ public class AppCanPlugin implements Plugin<Project> {
     BasePlugin androidPlugin
     List<Task> flavorsJarTask=new ArrayList<Task>()
     List<Task> flavorsProguardTask=new ArrayList<Task>()
-
+    List<String> flavors=new ArrayList<String>()
     static final String BUILD_APPCAN_DIR ="build/appcan"
     public static String version=""
 
@@ -54,8 +54,19 @@ public class AppCanPlugin implements Plugin<Project> {
             }
             createJarTask(project)
             createProguardJarTask(project)
+            createBuildEngineTask(project)
         }
 
+    }
+
+    /**
+     * 生成所有的引擎
+     */
+    private void createBuildEngineTask(Project project){
+        def task=project.tasks.create("buildEngine")
+        flavors.each { flavor->
+            task.dependsOn(project.tasks.findByName("export${flavor.capitalize()}Engine"))
+        }
     }
 
     /**
@@ -73,7 +84,12 @@ public class AppCanPlugin implements Plugin<Project> {
      */
     private static void createCopyEngineJarTask(Project project, String name){
         def task=project.tasks.create("copy${name.capitalize()}EngineJar",Copy)
-        task.from("build/outputs/jar/AppCanEngine_${name}.jar")
+        if (name.equals("crosswalk")){
+            task.from("build/outputs/jar/AppCanEngine_${name}.jar",
+                    "libs/crosswalk-19.49.514.0.aar","libs/libacedes_for_crosswalk.jar")
+        }else {
+            task.from("build/outputs/jar/AppCanEngine_${name}.jar","libs/libacedes-v1.jar")
+        }
         task.into("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm/libs")
         task.dependsOn(project.tasks.findByName("copy${name.capitalize()}Project"))
     }
@@ -215,6 +231,7 @@ public class AppCanPlugin implements Plugin<Project> {
         if ('crosswalk'.equals(name)){
             proguardTask.libraryjars('libs/crosswalk-19.49.514.0.aar')
         }
+        flavors.add(name)
         flavorsProguardTask.add(proguardTask)
     }
 
