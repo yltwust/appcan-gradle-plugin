@@ -50,7 +50,7 @@ public class AppCanPlugin implements Plugin<Project> {
                 createCopyBaseProjectTask(project,name)
                 createCopyEngineJarTask(project,name)
                 createWebkitCorePalmZipTask(project,name)
-                createExportEngineZipTask(project,name)
+                createBuildEngineZipTask(project,name)
             }
             createJarTask(project)
             createProguardJarTask(project)
@@ -65,7 +65,7 @@ public class AppCanPlugin implements Plugin<Project> {
     private void createBuildEngineTask(Project project){
         def task=project.tasks.create("buildEngine")
         flavors.each { flavor->
-            task.dependsOn(project.tasks.findByName("export${flavor.capitalize()}Engine"))
+            task.dependsOn(project.tasks.findByName("build${flavor.capitalize()}Engine"))
         }
     }
 
@@ -94,7 +94,7 @@ public class AppCanPlugin implements Plugin<Project> {
      * 压缩WebkitCorePalm工程
      */
     private void createWebkitCorePalmZipTask(Project project, String name){
-        def task=project.tasks.create("export${name.capitalize()}EngineTemp",SevenZip)
+        def task=project.tasks.create("build${name.capitalize()}EngineTemp",SevenZip)
         task.from("$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/WebkitCorePalm")
         task.destinationDir=project.file("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
         task.archiveName=getPackageName(name)
@@ -105,8 +105,8 @@ public class AppCanPlugin implements Plugin<Project> {
     /**
      * 生成引擎包
      */
-    private void createExportEngineZipTask(Project project, String name){
-        def task=project.tasks.create("export${name.capitalize()}Engine",Zip)
+    private void createBuildEngineZipTask(Project project, String name){
+        def task=project.tasks.create("build${name.capitalize()}Engine",Zip)
         task.from("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/${getPackageName(name)}",
                 "$BUILD_APPCAN_DIR/$name/en_baseEngineProject/androidEngine.xml")
         task.into("")
@@ -114,7 +114,7 @@ public class AppCanPlugin implements Plugin<Project> {
         task.destinationDir=project.file("build/outputs/engine")
         task.baseName=getPackageName(name)
         task.encoding="UTF-8"
-        task.dependsOn(project.tasks.findByName("export${name.capitalize()}EngineTemp"))
+        task.dependsOn(project.tasks.findByName("build${name.capitalize()}EngineTemp"))
         task.doFirst{
              setXmlContent(new File(project.getProjectDir(),
                     "$BUILD_APPCAN_DIR/${name}/en_baseEngineProject/androidEngine.xml"),name)
@@ -194,7 +194,7 @@ public class AppCanPlugin implements Plugin<Project> {
         def applicationId=androidPlugin.extension.defaultConfig.applicationId;
         def jarEngineTask = project.tasks.create("jar${name.capitalize()}Engine",Jar)
         jarEngineTask.setBaseName(jarBaseName)
-        jarEngineTask.description="export $name Engine jar"
+        jarEngineTask.description="build $name Engine jar"
         jarEngineTask.destinationDir=project.file("build/outputs/jar")
         jarEngineTask.from("build/intermediates/classes/$name/release/")
         jarEngineTask.into("")
