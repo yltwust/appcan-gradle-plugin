@@ -133,15 +133,15 @@ public class AppCanPlugin implements Plugin<Project> {
     /**
      * 获取xml文件里面的version
      */
-    private static String getEngineZipVersion(String flavor){
+    private static String getEngineZipVersion(){
         def date = new Date().format("yyMMdd")
         def versionTemp=version
-        return "sdksuit_${versionTemp}_${date}_01_${flavor}"
+        return "sdksuit_${versionTemp}_${date}_01"
     }
 
     private void setXmlContent(File xmlFile,String flavor){
         def content=xmlFile.getText('UTF-8')
-                .replace("\$version\$",getEngineZipVersion(flavor))
+                .replace("\$version\$",getEngineZipVersion())
                 .replace("\$package\$",getPackageName(flavor))
                 .replace("\$kernel\$",flavor)
         xmlFile.write(content)
