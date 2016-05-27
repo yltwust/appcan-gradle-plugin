@@ -139,11 +139,27 @@ public class AppCanPlugin implements Plugin<Project> {
         return "sdksuit_${versionTemp}_${date}_01"
     }
 
+    /**
+     * 获取展示在网页的提示信息
+     * @param flavor
+     * @return
+     */
+    private static String  getKernelString(String flavor){
+        if ("x5".equals(flavor)){
+            return "腾讯X5内核"
+        }else if ("system".equals(flavor)){
+            return "系统内核"
+        }else if ("crosswalk".equals(flavor)){
+            return "Crosswalk内核"
+        }
+        return flavor+"内核"
+    }
+
     private void setXmlContent(File xmlFile,String flavor){
         def content=xmlFile.getText('UTF-8')
                 .replace("\$version\$",getEngineZipVersion())
                 .replace("\$package\$",getPackageName(flavor))
-                .replace("\$kernel\$",flavor)
+                .replace("\$kernel\$",getKernelString(flavor))
         xmlFile.write(content)
     }
 
