@@ -1,19 +1,19 @@
 package com.appcan
 
-import com.android.build.gradle.AppPlugin
 import com.android.build.gradle.BasePlugin
 import com.android.build.gradle.internal.VariantManager
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.internal.variant.BaseVariantOutputData
 import com.android.builder.model.SourceProvider
 import net.koiosmedia.gradle.sevenzip.SevenZip
+import org.codehaus.groovy.runtime.ResourceGroovyMethods
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
+import org.gradle.api.tasks.Copy
 import org.gradle.api.tasks.SourceTask
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.bundling.Zip
-import org.gradle.api.tasks.Copy
 import proguard.gradle.ProGuardTask
 
 import java.util.regex.Matcher
@@ -40,8 +40,6 @@ public class AppCanPlugin implements Plugin<Project> {
             version=getEngineVersion(project)
             androidPlugin=getAndroidBasePlugin(project)
             def variantManager=getVariantManager(androidPlugin)
-            def androidAppPlugin=androidPlugin as AppPlugin
-            println(androidAppPlugin)
             processVariantData(variantManager.variantDataList,androidPlugin)
 
             variantManager.getProductFlavors().keySet().each { name ->
@@ -160,7 +158,8 @@ public class AppCanPlugin implements Plugin<Project> {
                 .replace("\$version\$",getEngineZipVersion())
                 .replace("\$package\$",getPackageName(flavor))
                 .replace("\$kernel\$",getKernelString(flavor))
-        xmlFile.write(content)
+//        xmlFile.write(content)
+        ResourceGroovyMethods.write(xmlFile,content,'UTF-8')
     }
 
     /**
@@ -217,7 +216,9 @@ public class AppCanPlugin implements Plugin<Project> {
         jarEngineTask.exclude('**/R.class')
         jarEngineTask.exclude('**/R\$*.class')
         jarEngineTask.exclude('**/BuildConfig.class')
-        jarEngineTask.exclude(applicationId.replace('.','/'))
+        if (applicationId!=null) {
+            jarEngineTask.exclude(applicationId.replace('.', '/'))
+        }
         jarEngineTask.dependsOn(project.tasks.findByName("compile${name.capitalize()}ReleaseJavaWithJavac"))
         flavorsJarTask.add(jarEngineTask)
     }
