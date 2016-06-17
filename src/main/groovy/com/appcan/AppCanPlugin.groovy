@@ -74,7 +74,7 @@ public class AppCanPlugin implements Plugin<Project> {
         def task=project.tasks.create("copy${name.capitalize()}Project",Copy)
         task.from("../en_baseEngineProject")
         task.into("$BUILD_APPCAN_DIR/$name/en_baseEngineProject")
-        task.dependsOn(project.tasks.findByName("proguard${name.capitalize()}Engine"))
+        task.dependsOn(project.tasks.findByName("build${name.capitalize()}Jar"))
     }
 
     /**
@@ -184,7 +184,7 @@ public class AppCanPlugin implements Plugin<Project> {
      * @param project
      */
     private void createJarTask(Project project){
-        def jarTask=project.tasks.create("jarEngine")
+        def jarTask=project.tasks.create("buildJarTemp")
         for (Task task:flavorsJarTask){
             jarTask.dependsOn(task)
         }
@@ -195,7 +195,7 @@ public class AppCanPlugin implements Plugin<Project> {
      * @param project
      */
     private void createProguardJarTask(Project project){
-        def proguardTask=project.tasks.create("proguardEngine")
+        def proguardTask=project.tasks.create("buildJar")
         for (Task task:flavorsProguardTask){
             proguardTask.dependsOn(task)
         }
@@ -207,7 +207,7 @@ public class AppCanPlugin implements Plugin<Project> {
     private void createFlavorsJarTask(Project project, BasePlugin androidPlugin, def name){
         def jarBaseName="AppCanEngine-${name}-un-proguard"
         def applicationId=androidPlugin.extension.defaultConfig.applicationId;
-        def jarEngineTask = project.tasks.create("jar${name.capitalize()}Engine",Jar)
+        def jarEngineTask = project.tasks.create("build${name.capitalize()}JarTemp",Jar)
         jarEngineTask.setBaseName(jarBaseName)
         jarEngineTask.description="build $name Engine jar"
         jarEngineTask.destinationDir=project.file("build/outputs/jar")
@@ -227,8 +227,8 @@ public class AppCanPlugin implements Plugin<Project> {
      * 对每个flavor创建Task生成混淆的jar
      **/
     private void createFlavorsProguardTask(Project project, def name){
-        def jarTaskName="jar${name.capitalize()}Engine"
-        def taskName="proguard${name.capitalize()}Engine"
+        def jarTaskName="build${name.capitalize()}JarTemp"
+        def taskName="build${name.capitalize()}Jar"
         def proguardTask=project.tasks.create(taskName,ProGuardTask)
         proguardTask.dependsOn(project.tasks.findByName(jarTaskName))
 
