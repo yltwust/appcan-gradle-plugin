@@ -5,8 +5,12 @@ repositories {
 
 apply plugin: 'groovy'
 
+
 dependencies {
     compile fileTree(dir: 'libs', include: '*.jar')
     compile 'com.android.tools.build:gradle:2.1.0'
     compile files('libs/gradle-task-7z-0.1.0.jar')
 }
+
+sourceCompatibility = 1.6
+targetCompatibility = 1.6
