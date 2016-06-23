@@ -5,6 +5,7 @@ import com.android.build.gradle.internal.VariantManager
 import com.android.build.gradle.internal.variant.BaseVariantData
 import com.android.build.gradle.internal.variant.BaseVariantOutputData
 import com.android.builder.model.SourceProvider
+import com.android.utils.FileUtils
 import net.koiosmedia.gradle.sevenzip.SevenZip
 import org.codehaus.groovy.runtime.ResourceGroovyMethods
 import org.gradle.api.Plugin
@@ -42,28 +43,42 @@ public class AppCanPlugin implements Plugin<Project> {
             def variantManager=getVariantManager(androidPlugin)
             processVariantData(variantManager.variantDataList,androidPlugin)
 
-            variantManager.getProductFlavors().keySet().each { name ->
-                createFlavorsJarTask(project,androidPlugin,name)
-                createFlavorsProguardTask(project,name)
-                createCopyBaseProjectTask(project,name)
-                createCopyEngineJarTask(project,name)
-                createWebkitCorePalmZipTask(project,name)
-                createBuildEngineZipTask(project,name)
+            variantManager.getProductFlavors().keySet().each { flavor ->
+                createFlavorsJarTask(project,androidPlugin,flavor)
+                createFlavorsProguardTask(project,flavor)
+                createCopyBaseProjectTask(project,flavor)
+                createCopyEngineJarTask(project,flavor)
+                createWebkitCorePalmZipTask(project,flavor)
+                createBuildEngineZipTask(project,flavor)
+                createFlavorsCopyAarTask(flavor)
+                createFlavorsBuildAarTask(flavor)
             }
             createJarTask(project)
             createProguardJarTask(project)
-            createBuildEngineTask(project)
+            createBuildEngineTask()
+            createBuildAarTask(project)
         }
 
+    }
+
+
+    /**
+     * 生成所有的aar
+     */
+    private void createBuildAarTask(Project project){
+        def task=project.tasks.create("buildAar")
+        flavors.each { flavor ->
+            task.dependsOn(project.tasks.findByName("build${flavor.capitalize()}Aar"))
+        }
     }
 
     /**
      * 生成所有的引擎
      */
-    private void createBuildEngineTask(Project project){
-        def task=project.tasks.create("buildEngine")
+    private void createBuildEngineTask(){
+        def task=mProject.tasks.create("buildEngine")
         flavors.each { flavor->
-            task.dependsOn(project.tasks.findByName("build${flavor.capitalize()}Engine"))
+            task.dependsOn(mProject.tasks.findByName("build${flavor.capitalize()}Engine"))
         }
     }
 
@@ -283,11 +298,58 @@ public class AppCanPlugin implements Plugin<Project> {
     }
 
 
-
     private static VariantManager getVariantManager(BasePlugin plugin) {
         return plugin.variantManager
     }
 
+    /**
+     * 解压aar内容，并删除widget，替换混淆过的Jar
+     * @param flavor
+     * @return
+     */
+    def createFlavorsCopyAarTask(String flavor) {
+        def copyAarTaskName="build${flavor.capitalize()}AarTemp"
+        def jarTaskName="build${flavor.capitalize()}Jar"
+        def assembleTask="assemble${flavor.capitalize()}Release"
+        def copyAarTask=mProject.tasks.create(copyAarTaskName,Copy)
+        def tempFile=mProject.file("build/outputs/aar/temp/${flavor}")
+        FileUtils.emptyFolder(tempFile)
+        def aarFile=mProject.file("build/outputs/aar/Engine-${flavor}-release.aar")
+        copyAarTask.dependsOn(mProject.tasks.findByName(jarTaskName))
+        copyAarTask.dependsOn(mProject.tasks.findByName(assembleTask))
+        copyAarTask.from(mProject.zipTree(aarFile))
+        copyAarTask.into tempFile
+        copyAarTask.doLast {
+            println("clean widget ...")
+            FileUtils.emptyFolder(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
+            println("replace classes.jar ...")
+            FileUtils.delete(new File(tempFile,"classes.jar"))
+            FileUtils.copy(mProject.file("build/outputs/jar/AppCanEngine-${flavor}-${version}.jar"),
+                    mProject.file(tempFile))
+            FileUtils.renameTo(new File(tempFile,"AppCanEngine-${flavor}-${version}.jar"),
+                    new File(tempFile,"classes.jar"))
+        }
+    }
 
+    /**
+     *  重新生成aar
+     **/
+    def createFlavorsBuildAarTask(String flavor) {
+        def aarTaskName="build${flavor.capitalize()}Aar"
+        def copyAarTaskName="build${flavor.capitalize()}AarTemp"
+        def aarTask=mProject.tasks.create(aarTaskName,Zip)
+        def tempFile=mProject.file("build/outputs/aar/temp/${flavor}")
+        aarTask.dependsOn(mProject.tasks.findByName(copyAarTaskName))
+        aarTask.from(tempFile)
+        aarTask.into("")
+        aarTask.include('**/*')
+        aarTask.destinationDir=mProject.file('build/outputs/aar/')
+        aarTask.extension="aar"
+        aarTask.baseName="Engine-${flavor}-release-${version}"
+        aarTask.doLast {
+            FileUtils.delete(mProject.file("build/outputs/aar/${mProject.name}-${flavor}-release.aar"))
+            FileUtils.emptyFolder(tempFile)
+        }
+    }
 
 }
