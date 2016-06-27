@@ -322,6 +322,8 @@ public class AppCanPlugin implements Plugin<Project> {
         copyAarTask.doLast {
             println("clean widget ...")
             FileUtils.emptyFolder(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
+            print("process Manifest ...")
+            processManifest(tempFile)
             println("replace classes.jar ...")
             FileUtils.delete(new File(tempFile,"classes.jar"))
             FileUtils.copy(mProject.file("build/outputs/jar/AppCanEngine-${flavor}-${version}.jar"),
@@ -329,6 +331,13 @@ public class AppCanPlugin implements Plugin<Project> {
             FileUtils.renameTo(new File(tempFile,"AppCanEngine-${flavor}-${version}.jar"),
                     new File(tempFile,"classes.jar"))
         }
+    }
+
+    def processManifest(File tempFile){
+        def mainfestFile=new File(tempFile,"AndroidManifest.xml");
+        def content=mainfestFile.getText('UTF-8')
+                .replace("android:label=\"@string/app_name\"","")
+        ResourceGroovyMethods.write(mainfestFile,content,'UTF-8')
     }
 
     /**
