@@ -148,7 +148,7 @@ public class AppCanPlugin implements Plugin<Project> {
      */
     private static String getEngineZipVersion(){
         def date = new Date().format("yyMMdd")
-        def versionTemp=version
+        def versionTemp=version.substring(0,version.lastIndexOf("."))
         return "sdksuit_${versionTemp}_${date}_01"
     }
 
@@ -234,7 +234,7 @@ public class AppCanPlugin implements Plugin<Project> {
         if (applicationId!=null) {
             jarEngineTask.exclude(applicationId.replace('.', '/'))
         }
-        jarEngineTask.dependsOn(project.tasks.findByName("compile${name.capitalize()}ReleaseJavaWithJavac"))
+        jarEngineTask.dependsOn(project.tasks.findByName("compile${name.capitalize()}ReleaseSources"))
         flavorsJarTask.add(jarEngineTask)
     }
 
@@ -313,15 +313,17 @@ public class AppCanPlugin implements Plugin<Project> {
         def assembleTask="assemble${flavor.capitalize()}Release"
         def copyAarTask=mProject.tasks.create(copyAarTaskName,Copy)
         def tempFile=mProject.file("build/outputs/aar/temp/${flavor}")
-        FileUtils.emptyFolder(tempFile)
-        def aarFile=mProject.file("build/outputs/aar/Engine-${flavor}-release.aar")
+        if (tempFile.exists()){
+            FileUtils.delete(tempFile)
+        }
+         def aarFile=mProject.file("build/outputs/aar/Engine-${flavor}-release.aar")
         copyAarTask.dependsOn(mProject.tasks.findByName(jarTaskName))
         copyAarTask.dependsOn(mProject.tasks.findByName(assembleTask))
         copyAarTask.from(mProject.zipTree(aarFile))
         copyAarTask.into tempFile
         copyAarTask.doLast {
             println("clean widget ...")
-            FileUtils.emptyFolder(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
+            FileUtils.delete(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
             print("process Manifest ...")
             processManifest(tempFile)
             println("replace classes.jar ...")
@@ -357,7 +359,9 @@ public class AppCanPlugin implements Plugin<Project> {
         aarTask.baseName="Engine-${flavor}-release-${version}"
         aarTask.doLast {
             FileUtils.delete(mProject.file("build/outputs/aar/${mProject.name}-${flavor}-release.aar"))
-            FileUtils.emptyFolder(tempFile)
+            if (tempFile.exists()){
+                FileUtils.delete(tempFile)
+            }
         }
     }
 
