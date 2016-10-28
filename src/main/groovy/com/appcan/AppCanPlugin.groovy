@@ -314,7 +314,7 @@ public class AppCanPlugin implements Plugin<Project> {
         def copyAarTask=mProject.tasks.create(copyAarTaskName,Copy)
         def tempFile=mProject.file("build/outputs/aar/temp/${flavor}")
         if (tempFile.exists()){
-            FileUtils.delete(tempFile)
+            FileUtils.deleteFolder(tempFile)
         }
          def aarFile=mProject.file("build/outputs/aar/Engine-${flavor}-release.aar")
         copyAarTask.dependsOn(mProject.tasks.findByName(jarTaskName))
@@ -323,7 +323,7 @@ public class AppCanPlugin implements Plugin<Project> {
         copyAarTask.into tempFile
         copyAarTask.doLast {
             println("clean widget ...")
-            FileUtils.delete(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
+            FileUtils.deleteFolder(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
             print("process Manifest ...")
             processManifest(tempFile)
             println("replace classes.jar ...")
@@ -360,7 +360,7 @@ public class AppCanPlugin implements Plugin<Project> {
         aarTask.doLast {
             FileUtils.delete(mProject.file("build/outputs/aar/${mProject.name}-${flavor}-release.aar"))
             if (tempFile.exists()){
-                FileUtils.delete(tempFile)
+                FileUtils.deleteFolder(tempFile)
             }
         }
     }
