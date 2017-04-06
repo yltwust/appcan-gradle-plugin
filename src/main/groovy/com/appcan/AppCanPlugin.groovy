@@ -126,7 +126,7 @@ public class AppCanPlugin implements Plugin<Project> {
         task.exclude("$BUILD_APPCAN_DIR/$name/en_baseEngineProject/WebkitCorePalm")
         task.destinationDir=project.file("build/outputs/engine")
         task.baseName=getPackageName(name)
-        task.encoding="UTF-8"
+        task.metadataCharset="UTF-8"
         task.dependsOn(project.tasks.findByName("build${name.capitalize()}EngineTemp"))
         task.doFirst{
              setXmlContent(new File(project.getProjectDir(),
@@ -314,7 +314,7 @@ public class AppCanPlugin implements Plugin<Project> {
         def copyAarTask=mProject.tasks.create(copyAarTaskName,Copy)
         def tempFile=mProject.file("build/outputs/aar/temp/${flavor}")
         if (tempFile.exists()){
-            FileUtils.deleteFolder(tempFile)
+            FileUtils.deleteDirectoryContents(tempFile)
         }
          def aarFile=mProject.file("build/outputs/aar/Engine-${flavor}-release.aar")
         copyAarTask.dependsOn(mProject.tasks.findByName(jarTaskName))
@@ -323,12 +323,12 @@ public class AppCanPlugin implements Plugin<Project> {
         copyAarTask.into tempFile
         copyAarTask.doLast {
             println("clean widget ...")
-            FileUtils.deleteFolder(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
+            FileUtils.deleteDirectoryContents(project.file("build/outputs/aar/temp/${flavor}/assets/widget"))
             print("process Manifest ...")
             processManifest(tempFile)
             println("replace classes.jar ...")
             FileUtils.delete(new File(tempFile,"classes.jar"))
-            FileUtils.copy(mProject.file("build/outputs/jar/AppCanEngine-${flavor}-${version}.jar"),
+            FileUtils.copyFileToDirectory(mProject.file("build/outputs/jar/AppCanEngine-${flavor}-${version}.jar"),
                     mProject.file(tempFile))
             FileUtils.renameTo(new File(tempFile,"AppCanEngine-${flavor}-${version}.jar"),
                     new File(tempFile,"classes.jar"))
@@ -360,7 +360,7 @@ public class AppCanPlugin implements Plugin<Project> {
         aarTask.doLast {
             FileUtils.delete(mProject.file("build/outputs/aar/${mProject.name}-${flavor}-release.aar"))
             if (tempFile.exists()){
-                FileUtils.deleteFolder(tempFile)
+                FileUtils.deleteDirectoryContents(tempFile)
             }
         }
     }
